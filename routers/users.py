@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from typing import Annotated
 import models
@@ -50,7 +50,7 @@ async def update_password(db: db_dependency, user: user_dependency, request: Upd
 
 
 @router.put("/update-phone-number", status_code=status.HTTP_200_OK)
-async def update_phone_number(db: db_dependency, user: user_dependency, phone_number: str = Field(..., min_length=10, max_length=15)):
+async def update_phone_number(db: db_dependency, user: user_dependency, phone_number: str = Query(..., min_length=10, max_length=15)):
     if not user:
         raise HTTPException(status_code=401, detail={"error": "Unauthorized"})
     user_in_db = db.query(models.Users).filter(models.Users.id == user.id).first()

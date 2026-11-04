@@ -28,6 +28,7 @@ class UserRequest(BaseModel):
     password: str
     role: str
     is_active: bool = True
+    phone_number: str | None = None
 
 class TokenResponse(BaseModel):
     access_token: str
@@ -81,7 +82,8 @@ async def create_user(user: UserRequest, db: db_dependency):
         last_name=user.last_name,
         hashed_password=bcrypt_context.hash(user.password),
         role=user.role,
-        is_active=True
+        is_active=True,
+        phone_number=user.phone_number
     )
     db.add(new_user)
     db.commit()
@@ -92,7 +94,7 @@ async def create_user(user: UserRequest, db: db_dependency):
 @router.get("/user", status_code=status.HTTP_200_OK)
 async def get_users(db: db_dependency):
     users = db.query(Users).all()
-    users_response = [{"id": user.id, "username": user.username, "email": user.email, "role": user.role} for user in users]
+    users_response = [{"id": user.id, "username": user.username, "email": user.email, "role": user.role, "phone_number": user.phone_number} for user in users]
     return {"users": users_response}
 
 @router.get("/user/{user_id}", status_code=status.HTTP_200_OK)
@@ -100,7 +102,7 @@ async def get_user(user_id: int, db: db_dependency):
     user = db.query(Users).filter(Users.id == user_id).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-    return {"user": {"id": user.id, "username": user.username, "email": user.email, "role": user.role}}
+    return {"user": {"id": user.id, "username": user.username, "email": user.email, "role": user.role, "phone_number": user.phone_number}}
 
 
 @router.delete("/user/{user_id}", status_code=status.HTTP_200_OK)

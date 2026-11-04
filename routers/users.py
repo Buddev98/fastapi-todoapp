@@ -47,3 +47,15 @@ async def update_password(db: db_dependency, user: user_dependency, request: Upd
     user_in_db.hashed_password = pwd_context.hash(request.new_password)
     db.commit()
     return {"message": "Password updated successfully"}
+
+
+@router.put("/update-phone-number", status_code=status.HTTP_200_OK)
+async def update_phone_number(db: db_dependency, user: user_dependency, phone_number: str = Field(..., min_length=10, max_length=15)):
+    if not user:
+        raise HTTPException(status_code=401, detail={"error": "Unauthorized"})
+    user_in_db = db.query(models.Users).filter(models.Users.id == user.id).first()
+    if not user_in_db:
+        raise HTTPException(status_code=404, detail={"error": "User not found"})
+    user_in_db.phone_number = phone_number
+    db.commit()
+    return {"message": "Phone number updated successfully"}

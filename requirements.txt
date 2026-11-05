@@ -8,5 +8,6 @@ passlib==1.7.4
 bcrypt==4.0.1
 python-jose==3.5.0
 python-multipart==0.0.22
+Jinja2==3.1.6
 pytest==9.2.0
 httpx==0.28.1

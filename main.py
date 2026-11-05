@@ -23,3 +23,11 @@ app.include_router(users.router)
 @app.get("/")
 def home(request: Request):
     return templates.TemplateResponse(request, "home.html")
+
+@app.get("/auth/login-page")
+def login(request: Request):
+    return templates.TemplateResponse(request, "login.html")
+
+@app.get("/auth/register")
+def register(request: Request):
+    return templates.TemplateResponse(request, "register.html")

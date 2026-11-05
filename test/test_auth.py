@@ -156,3 +156,17 @@ def test_generate_token_empty_username(test_user):
     assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
     errors = response.json()["detail"]
     assert [(e["loc"], e["type"]) for e in errors] == [(["body", "username"], "missing")]
+
+
+def test_create_user_duplicate_username(test_user):
+    payload = {**NEW_USER, 'username': 'testuser'}
+    response = client.post('/auth/user', json=payload)
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.json() == {'detail': 'Username already registered'}
+
+
+def test_create_user_duplicate_email(test_user):
+    payload = {**NEW_USER, 'email': 'testuser@example.com'}
+    response = client.post('/auth/user', json=payload)
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert response.json() == {'detail': 'Email already registered'}

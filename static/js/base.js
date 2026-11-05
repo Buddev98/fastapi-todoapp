@@ -12,11 +12,11 @@
                 title: data.title,
                 description: data.description,
                 priority: parseInt(data.priority),
-                complete: false
+                completed: false
             };
 
             try {
-                const response = await fetch('/todos/todo', {
+                const response = await fetch('/todos/', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -54,7 +54,7 @@
             title: data.title,
             description: data.description,
             priority: parseInt(data.priority),
-            complete: data.complete === "on"
+            completed: data.complete === "on"
         };
 
         try {
@@ -66,7 +66,7 @@
 
             console.log(`${todoId}`)
 
-            const response = await fetch(`/todos/todo/${todoId}`, {
+            const response = await fetch(`/todos/${todoId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -98,7 +98,7 @@
                     throw new Error('Authentication token not found');
                 }
 
-                const response = await fetch(`/todos/todo/${todoId}`, {
+                const response = await fetch(`/todos/${todoId}`, {
                     method: 'DELETE',
                     headers: {
                         'Authorization': `Bearer ${token}`
@@ -156,7 +156,7 @@
                 } else {
                     // Handle error
                     const errorData = await response.json();
-                    alert(`Error: ${errorData.detail}`);
+                    alert(`Error: ${formatError(errorData)}`);
                 }
             } catch (error) {
                 console.error('Error:', error);
@@ -191,7 +191,7 @@
             };
 
             try {
-                const response = await fetch('/auth', {
+                const response = await fetch('/auth/user', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -204,7 +204,7 @@
                 } else {
                     // Handle error
                     const errorData = await response.json();
-                    alert(`Error: ${errorData.message}`);
+                    alert(`Error: ${formatError(errorData)}`);
                 }
             } catch (error) {
                 console.error('Error:', error);
@@ -216,6 +216,18 @@
 
 
 
+
+    // Helper function to turn an API error body into readable text
+    function formatError(errorData) {
+        const detail = errorData.detail;
+        if (typeof detail === 'string') {
+            return detail;
+        }
+        if (Array.isArray(detail)) {
+            return detail.map(e => `${e.loc.slice(1).join('.')}: ${e.msg}`).join('\n');
+        }
+        return JSON.stringify(detail);
+    }
 
     // Helper function to get a cookie by name
     function getCookie(name) {

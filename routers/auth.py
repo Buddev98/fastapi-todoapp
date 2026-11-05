@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Request
 from pydantic import BaseModel
 from fastapi import Depends
 from models import Users
@@ -9,6 +9,9 @@ from database import SessionLocal
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from jose import jwt, JWTError
 from datetime import timedelta, datetime, timezone
+from fastapi.templating import Jinja2Templates
+
+templates = Jinja2Templates(directory="templates")
 
 SECRET_KEY = "shans_todo_app_with_auth"  # Replace with your actual secret key
 ALGORITHM = "HS256"
@@ -43,6 +46,16 @@ def get_db():
 
 db_dependency = Annotated[Session, Depends(get_db)]
 
+
+#pages for rendering templates
+@router.get("/", status_code=status.HTTP_200_OK)
+async def home(request: Request):
+    return templates.TemplateResponse("home.html", {"request": request})
+
+
+
+#endpoints for authentication and user management
+
 def authenticate_user(username: str, password: str, db: db_dependency):
     user = db.query(Users).filter(Users.username == username).first()
     if not user or not bcrypt_context.verify(password, user.hashed_password):
@@ -75,6 +88,10 @@ def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], db: db_depen
 
 @router.post("/user", status_code=status.HTTP_201_CREATED)
 async def create_user(user: UserRequest, db: db_dependency):
+    existing = db.query(Users).filter((Users.username == user.username) | (Users.email == user.email)).first()
+    if existing:
+        field = "Username" if existing.username == user.username else "Email"
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"{field} already registered")
     new_user = Users(
         username=user.username,
         email=user.email,

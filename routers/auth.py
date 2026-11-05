@@ -10,6 +10,7 @@ from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from jose import jwt, JWTError
 from datetime import timedelta, datetime, timezone
 from fastapi.templating import Jinja2Templates
+from starlette.responses import RedirectResponse
 
 templates = Jinja2Templates(directory="templates")
 
@@ -47,10 +48,49 @@ def get_db():
 db_dependency = Annotated[Session, Depends(get_db)]
 
 
+def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], db: db_dependency):
+    return _decode_user(token, db)
+
+
+def _decode_user(token: str, db: Session):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        user_id: int = payload.get("user_id")
+        role: str = payload.get("role")
+        if username is None or user_id is None or role is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+    except JWTError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
+    user = db.query(Users).filter(Users.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    return user
+
+
+def get_user_from_cookie(request: Request, db: Session):
+    # Browser page loads send the JWT in a cookie, not an Authorization header
+    token = request.cookies.get("access_token")
+    if not token:
+        return None
+    try:
+        return _decode_user(token, db)
+    except HTTPException:
+        return None
+
+
 #pages for rendering templates
-@router.get("/", status_code=status.HTTP_200_OK)
-async def home(request: Request):
-    return templates.TemplateResponse("home.html", {"request": request})
+@router.get("/login-page", status_code=status.HTTP_200_OK)
+async def login_page(request: Request, db: db_dependency):
+    if get_user_from_cookie(request, db):
+        return RedirectResponse(url="/todos/todo-page", status_code=status.HTTP_302_FOUND)
+    return templates.TemplateResponse(request, "login.html")
+
+@router.get("/register", status_code=status.HTTP_200_OK)
+async def register_page(request: Request, db: db_dependency):
+    if get_user_from_cookie(request, db):
+        return RedirectResponse(url="/todos/todo-page", status_code=status.HTTP_302_FOUND)
+    return templates.TemplateResponse(request, "register.html")
 
 
 
@@ -69,21 +109,6 @@ def create_access_token(username: str, user_id: int, role: str, expires_delta: t
         token_data.update({"exp": (datetime.now(timezone.utc) + expire).timestamp()})
     token = jwt.encode(token_data, SECRET_KEY, algorithm=ALGORITHM)
     return token
-
-def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], db: db_dependency):
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        user_id: int = payload.get("user_id")
-        role: str = payload.get("role")
-        if username is None or user_id is None or role is None:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
-    except JWTError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
-    user = db.query(Users).filter(Users.id == user_id).first()
-    if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-    return user
 
 
 @router.post("/user", status_code=status.HTTP_201_CREATED)

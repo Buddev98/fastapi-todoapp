@@ -5,7 +5,7 @@ from typing import Annotated
 from models import Base, Users, Todos
 from database import engine, SessionLocal
 from pydantic import BaseModel, Field
-from .auth import get_current_user
+from .auth import get_current_user, get_user_from_cookie
 from starlette.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 
@@ -37,16 +37,6 @@ def redirect_to_login():
     response = RedirectResponse(url="/auth/login-page", status_code=status.HTTP_302_FOUND)
     response.delete_cookie("access_token")
     return response
-
-def get_user_from_cookie(request: fastapi.Request, db: Session):
-    # Browser page loads send the JWT in a cookie, not an Authorization header
-    token = request.cookies.get("access_token")
-    if not token:
-        return None
-    try:
-        return get_current_user(token, db)
-    except HTTPException:
-        return None
 
 # Templates
 templates = Jinja2Templates(directory="templates")

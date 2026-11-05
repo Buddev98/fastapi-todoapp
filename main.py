@@ -1,12 +1,12 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, status, Depends
+from sqlalchemy.orm import Session
 from models import Base
 from database import engine
 from routers import auth, todos, admin, users
-from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import RedirectResponse
 
 app = FastAPI()
-templates = Jinja2Templates(directory="templates")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 Base.metadata.create_all(bind=engine)
@@ -20,14 +20,8 @@ app.include_router(todos.router)
 app.include_router(admin.router)
 app.include_router(users.router)
 
-@app.get("/")
-def home(request: Request):
-    return templates.TemplateResponse(request, "home.html")
-
-@app.get("/auth/login-page")
-def login(request: Request):
-    return templates.TemplateResponse(request, "login.html")
-
-@app.get("/auth/register")
-def register(request: Request):
-    return templates.TemplateResponse(request, "register.html")
+@app.get("/", include_in_schema=False)
+def home(request: Request, db: Session = Depends(auth.get_db)):
+    if auth.get_user_from_cookie(request, db):
+        return RedirectResponse(url="/todos/todo-page", status_code=status.HTTP_302_FOUND)
+    return RedirectResponse(url="/auth/login-page", status_code=status.HTTP_302_FOUND)

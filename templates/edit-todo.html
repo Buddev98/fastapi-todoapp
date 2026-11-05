@@ -1,0 +1,33 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container w-50">
+    <div class="card">
+        <div class="card-header">
+            Edit todo
+        </div>
+        <div class="card-body">
+            <form id="editTodoForm">
+                <div class="form-group">
+                    <label for="title" class="form-label">Title</label>
+                    <input type="text" class="form-control" id="title" name="title" value="{{ todo.title }}" minlength="3" required>
+                </div>
+                <div class="form-group">
+                    <label for="description" class="form-label">Description</label>
+                    <textarea class="form-control" id="description" name="description" rows="3" minlength="3" maxlength="100" required>{{ todo.description }}</textarea>
+                </div>
+                <div class="form-group">
+                    <label for="priority" class="form-label">Priority (1-5)</label>
+                    <input type="number" class="form-control" id="priority" name="priority" min="1" max="5" value="{{ todo.priority }}" required>
+                </div>
+                <div class="form-check mb-3">
+                    <input type="checkbox" class="form-check-input" id="complete" name="complete" {% if todo.completed %}checked{% endif %}>
+                    <label for="complete" class="form-check-label">Completed</label>
+                </div>
+                <button type="submit" class="btn btn-primary">Save</button>
+                <button type="button" class="btn btn-danger" id="deleteButton">Delete</button>
+                <a href="/todos/todo-page" class="btn btn-secondary">Back</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -26,7 +26,7 @@
                 });
 
                 if (response.ok) {
-                    form.reset(); // Clear the form
+                    window.location.href = '/todos/todo-page'; // Back to the todo list
                 } else {
                     // Handle error
                     const errorData = await response.json();

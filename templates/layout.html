@@ -8,6 +8,7 @@
     <title>Todo App</title>
 </head>
 <body>
+    {% include 'navbar.html' %}
     {% block content %}
     {% endblock %}
     <script src="{{ url_for('static', path='/js/jquery-slim.js') }}"></script>
